@@ -14,7 +14,7 @@ func (e *Encoder) Encode(v interface{}, buf []byte) ([]byte, error) {
 	d := etree.NewDocument()
 	d.CreateProcInst("xml", `version="1.0" encoding="UTF-8"`)
 	root := d.CreateElement("root")
-	e.encodeValue(root, "data", reflect.ValueOf(v))
+	e.value(root, "data", reflect.ValueOf(v))
 
 	b := bytes.NewBuffer(buf)
 	_, err := d.WriteTo(b)
@@ -56,20 +56,20 @@ func (e *Encoder) value(parent *etree.Element, name string, v reflect.Value) err
 	case reflect.Map:
 		t := v.Type()
 		kt := t.Key()
-		vt := t.Elem()
+		//vt := t.Elem()
 		if kt.Kind() != reflect.String {
 			return fmt.Errorf("unsupported map key %s", kt.String())
 		}
 		keys := v.MapKeys()
 		elem := parent.CreateElement(name)
-		for i, key := range keys {
-			if err := e.value(elem, key, v.MapIndex(key)); err != nil {
+		for _, key := range keys {
+			if err := e.value(elem, key.String(), v.MapIndex(key)); err != nil {
 				return err
 			}
 		}
 		return nil
 
-	case reflect.Ptr:
+	case reflect.Ptr, reflect.Interface:
 		if !v.IsNil() {
 			return e.value(parent, name, v.Elem())
 		}
