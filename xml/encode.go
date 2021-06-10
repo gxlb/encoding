@@ -10,6 +10,7 @@ import (
 
 const valueType = "t"
 const valueCount = "c"
+const elemType = "e"
 
 type Encoder struct{}
 
@@ -17,8 +18,7 @@ func (e *Encoder) Encode(v interface{}, buf []byte, pretty bool) ([]byte, error)
 	d := etree.NewDocument()
 
 	d.CreateProcInst("xml", `version="1.0" encoding="UTF-8"`)
-	root := d.CreateElement("root")
-	e.value(root, "data", reflect.ValueOf(v))
+	e.value(&d.Element, "root", reflect.ValueOf(v))
 
 	if pretty {
 		d.WriteSettings.UseCRLF = true
@@ -56,6 +56,21 @@ func typeName(k reflect.Kind) string {
 	return ""
 }
 
+func elemName(k reflect.Kind) string {
+	switch k {
+	case reflect.Int, reflect.Uint, reflect.Float32, reflect.Float64,
+		reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return ValueNumber
+	case reflect.Bool:
+		return ValueBool
+	case reflect.String:
+		return ValueString
+	default:
+		return ValueMap
+	}
+}
+
 func (e *Encoder) value(parent *etree.Element, name string, v reflect.Value) error {
 	switch k := v.Kind(); k {
 	case reflect.Int, reflect.Uint, reflect.Float32, reflect.Float64,
@@ -71,6 +86,7 @@ func (e *Encoder) value(parent *etree.Element, name string, v reflect.Value) err
 		l := v.Len()
 		elem := parent.CreateElement(name)
 		elem.CreateAttr(valueType, typeName(k))
+		elem.CreateAttr(elemType, elemName(v.Type().Elem().Kind()))
 		c := 0
 		for i := 0; i < l; i++ {
 			if err := e.value(elem, "e", v.Index(i)); err != nil {
@@ -100,13 +116,15 @@ func (e *Encoder) value(parent *etree.Element, name string, v reflect.Value) err
 	case reflect.Map:
 		t := v.Type()
 		kt := t.Key()
-		//vt := t.Elem()
+		vt := t.Elem()
 		if kt.Kind() != reflect.String {
 			return fmt.Errorf("unsupported map key %s", kt.String())
 		}
 		keys := v.MapKeys()
 		elem := parent.CreateElement(name)
 		elem.CreateAttr(valueType, typeName(k))
+		elem.CreateAttr(elemType, elemName(vt.Kind()))
+
 		c := 0
 		for _, key := range keys {
 			if err := e.value(elem, key.String(), v.MapIndex(key)); err != nil {
@@ -120,6 +138,9 @@ func (e *Encoder) value(parent *etree.Element, name string, v reflect.Value) err
 	case reflect.Ptr, reflect.Interface:
 		if !v.IsNil() {
 			return e.value(parent, name, v.Elem())
+		} else {
+			elem := parent.CreateElement(name)
+			elem.SetText("null")
 		}
 		return nil
 
