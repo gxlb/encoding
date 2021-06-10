@@ -8,17 +8,52 @@ import (
 	"github.com/beevik/etree"
 )
 
+const valueType = "t"
+const valueCount = "c"
+
 type Encoder struct{}
 
-func (e *Encoder) Encode(v interface{}, buf []byte) ([]byte, error) {
+func (e *Encoder) Encode(v interface{}, buf []byte, pretty bool) ([]byte, error) {
 	d := etree.NewDocument()
+
 	d.CreateProcInst("xml", `version="1.0" encoding="UTF-8"`)
 	root := d.CreateElement("root")
 	e.value(root, "data", reflect.ValueOf(v))
 
+	if pretty {
+		d.WriteSettings.UseCRLF = true
+		d.Indent(2)
+	}
+
 	b := bytes.NewBuffer(buf)
 	_, err := d.WriteTo(b)
 	return b.Bytes(), err
+}
+
+const (
+	ValueNumber = "number"
+	ValueString = "string"
+	ValueBool   = "boolean"
+	ValueMap    = "map"
+	ValueArray  = "array"
+)
+
+func typeName(k reflect.Kind) string {
+	switch k {
+	case reflect.Int, reflect.Uint, reflect.Float32, reflect.Float64,
+		reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return ValueNumber
+	case reflect.Bool:
+		return ValueBool
+	case reflect.String:
+		return ValueString
+	case reflect.Struct, reflect.Map:
+		return ValueMap
+	case reflect.Array, reflect.Slice:
+		return ValueArray
+	}
+	return ""
 }
 
 func (e *Encoder) value(parent *etree.Element, name string, v reflect.Value) error {
@@ -28,29 +63,38 @@ func (e *Encoder) value(parent *etree.Element, name string, v reflect.Value) err
 		reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
 		reflect.String, reflect.Bool:
 		elem := parent.CreateElement(name)
+		elem.CreateAttr(valueType, typeName(k))
 		elem.SetText(fmt.Sprintf("%v", v.Interface()))
 		return nil
 
 	case reflect.Array, reflect.Slice:
 		l := v.Len()
 		elem := parent.CreateElement(name)
+		elem.CreateAttr(valueType, typeName(k))
+		c := 0
 		for i := 0; i < l; i++ {
-			if err := e.value(elem, "elem", v.Index(i)); err != nil {
+			if err := e.value(elem, "e", v.Index(i)); err != nil {
 				return err
 			}
+			c++
 		}
+		elem.CreateAttr(valueCount, fmt.Sprintf("%d", c))
 		return nil
 
 	case reflect.Struct:
 		t := v.Type()
 		elem := parent.CreateElement(name)
+		elem.CreateAttr(valueType, typeName(k))
+		c := 0
 		for i, n := 0, t.NumField(); i < n; i++ {
 			f := t.Field(i)
 			fv := v.Field(i)
 			if err := e.value(elem, f.Name, fv); err != nil {
 				return err
 			}
+			c++
 		}
+		elem.CreateAttr(valueCount, fmt.Sprintf("%d", c))
 		return nil
 
 	case reflect.Map:
@@ -62,11 +106,15 @@ func (e *Encoder) value(parent *etree.Element, name string, v reflect.Value) err
 		}
 		keys := v.MapKeys()
 		elem := parent.CreateElement(name)
+		elem.CreateAttr(valueType, typeName(k))
+		c := 0
 		for _, key := range keys {
 			if err := e.value(elem, key.String(), v.MapIndex(key)); err != nil {
 				return err
 			}
+			c++
 		}
+		elem.CreateAttr(valueCount, fmt.Sprintf("%d", c))
 		return nil
 
 	case reflect.Ptr, reflect.Interface:
