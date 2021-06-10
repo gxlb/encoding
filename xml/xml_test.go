@@ -26,4 +26,8 @@ func TestXml(t *testing.T) {
 	}
 
 	fmt.Printf("xml:\n%s\n", string(b))
+
+	dec := Decoder{}
+	dec.Decode(nil, b)
+
 }
