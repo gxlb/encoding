@@ -12,8 +12,10 @@ const valueType = "t"
 const valueCount = "c"
 const elemType = "e"
 
+// Encoder implements a xml encoder
 type Encoder struct{}
 
+// Encode marshal a Go data into []byte, it use buf firstly.
 func (e *Encoder) Encode(v interface{}, buf []byte, pretty bool) ([]byte, error) {
 	d := etree.NewDocument()
 
@@ -30,47 +32,7 @@ func (e *Encoder) Encode(v interface{}, buf []byte, pretty bool) ([]byte, error)
 	return b.Bytes(), err
 }
 
-const (
-	ValueNumber = "number"
-	ValueString = "string"
-	ValueBool   = "boolean"
-	ValueMap    = "map"
-	ValueArray  = "array"
-)
-
-func typeName(k reflect.Kind) string {
-	switch k {
-	case reflect.Int, reflect.Uint, reflect.Float32, reflect.Float64,
-		reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
-		reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		return ValueNumber
-	case reflect.Bool:
-		return ValueBool
-	case reflect.String:
-		return ValueString
-	case reflect.Struct, reflect.Map:
-		return ValueMap
-	case reflect.Array, reflect.Slice:
-		return ValueArray
-	}
-	return ""
-}
-
-func elemName(k reflect.Kind) string {
-	switch k {
-	case reflect.Int, reflect.Uint, reflect.Float32, reflect.Float64,
-		reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
-		reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		return ValueNumber
-	case reflect.Bool:
-		return ValueBool
-	case reflect.String:
-		return ValueString
-	default:
-		return ValueMap
-	}
-}
-
+// value encode a Go value recursively
 func (e *Encoder) value(parent *etree.Element, name string, v reflect.Value) error {
 	switch k := v.Kind(); k {
 	case reflect.Int, reflect.Uint, reflect.Float32, reflect.Float64,

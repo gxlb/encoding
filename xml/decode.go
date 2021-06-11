@@ -7,8 +7,10 @@ import (
 	"github.com/beevik/etree"
 )
 
+// Decoder implements xml decoder
 type Decoder struct{}
 
+// Decode unmarshal xml to universal Go data
 func (dec *Decoder) Decode(data []byte) (interface{}, error) {
 	doc := etree.NewDocument()
 	if err := doc.ReadFromBytes(data); err != nil {
@@ -17,6 +19,7 @@ func (dec *Decoder) Decode(data []byte) (interface{}, error) {
 	return dec.visit(doc.Root())
 }
 
+// getAttr return Attr of an xml element with given name
 func getAttr(name string, v *etree.Element) string {
 	for i := 0; i < len(v.Attr); i++ {
 		if p := &v.Attr[i]; p.Key == name {
@@ -26,6 +29,7 @@ func getAttr(name string, v *etree.Element) string {
 	return ""
 }
 
+// visit access an xml element recursively
 func (dec *Decoder) visit(v *etree.Element) (interface{}, error) {
 	switch a := getAttr(valueType, v); a {
 	case ValueBool:
@@ -62,12 +66,12 @@ func (dec *Decoder) visit(v *etree.Element) (interface{}, error) {
 		c := v.ChildElements()
 		if len(c) == 0 {
 			t := v.Text()
-			if d, err := strconv.ParseFloat(t, 64); err == nil {
-				return d, nil
-			}
-			if d, err := strconv.ParseBool(t); err == nil {
-				return d, nil
-			}
+			// if d, err := strconv.ParseFloat(t, 64); err == nil {
+			// 	return d, nil
+			// }
+			// if d, err := strconv.ParseBool(t); err == nil {
+			// 	return d, nil
+			// }
 			if t == "null" {
 				return nil, nil
 			}
