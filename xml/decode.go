@@ -51,20 +51,20 @@ func (dec *Decoder) visit(v *etree.Element) (interface{}, error) {
 		}
 		return s, nil
 	case ValueMap:
-		c := v.ChildElements()
+		children := v.ChildElements()
 		var s = make(map[string]interface{})
-		for i := 0; i < len(c); i++ {
-			vv := c[i]
-			d, err := dec.visit(vv)
+		for i := 0; i < len(children); i++ {
+			child := children[i]
+			d, err := dec.visit(child)
 			if err != nil {
 				return nil, err
 			}
-			s[v.Tag] = d
+			s[child.Tag] = d
 		}
 		return s, nil
 	case "":
-		c := v.ChildElements()
-		if len(c) == 0 {
+		children := v.ChildElements()
+		if len(children) == 0 {
 			t := v.Text()
 			// if d, err := strconv.ParseFloat(t, 64); err == nil {
 			// 	return d, nil
@@ -78,18 +78,18 @@ func (dec *Decoder) visit(v *etree.Element) (interface{}, error) {
 			return t, nil
 		} else {
 			var s = make(map[string]interface{})
-			for i := 0; i < len(c); i++ {
-				vv := c[i]
-				d, err := dec.visit(vv)
+			for i := 0; i < len(children); i++ {
+				child := children[i]
+				d, err := dec.visit(child)
 				if err != nil {
 					return nil, err
 				}
-				s[vv.Tag] = d
+				s[child.Tag] = d
 			}
 			return s, nil
 		}
 	default:
 	}
 
-	return nil, fmt.Errorf("unsupported node %#v", v)
+	return nil, fmt.Errorf("unsupported xml element %#v", v)
 }

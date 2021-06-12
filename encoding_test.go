@@ -74,7 +74,6 @@ func TestEncoding(t *testing.T) {
 			d, _ := FromXml(v.xml)
 			fmt.Printf("%d %s %#v\n", i, v, d)
 		}
-
 	}
 
 	var xx = []interface{}{
@@ -84,12 +83,23 @@ func TestEncoding(t *testing.T) {
 		12.34,
 		[]string{"a", "b", "c"},
 		[]int{1, 2, 3, 4},
+		struct {
+			X int
+			Y string
+		}{2, "yy"},
 	}
 	xml, _ := ToXml(xx, true)
 	fmt.Printf("xml:\n%s\n", xml)
 	xmls, _ := FromXml(xml)
-	fmt.Printf("xml:\n%#v\n", xmls)
+	fmt.Printf("xmls:\n%#v\n", xmls)
+
+	yml, _ := ToYaml(xx, true)
+	fmt.Printf("yml:\n%s\n", yml)
+	ymls := MustFromYaml(yml)
+	fmt.Printf("ymls:\n%#v\n", ymls)
 
 	jsn, _ := ToJson(xx, true)
 	fmt.Printf("json:\n%s\n", jsn)
+	jsns := MustFromJson(jsn)
+	fmt.Printf("jsns:\n%#v\n", jsns)
 }

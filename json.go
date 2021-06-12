@@ -2,7 +2,6 @@ package encoding
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
 //-------------------------
@@ -32,12 +31,9 @@ func MustToJson(v interface{}, pretty bool) string {
 
 // FromJson decode a json string to universal Go data
 func FromJson(s string) (interface{}, error) {
-	var d struct {
-		D interface{}
-	}
-	ss := fmt.Sprintf(`{"D":%s}`, s)
-	err := json.Unmarshal(unsafeStringBytes(ss), &d)
-	return d.D, err
+	var d interface{}
+	err := json.Unmarshal(unsafeStringBytes(s), &d) // decode to *interface{}
+	return d, err
 }
 
 // MustFromJson decode a json string to universal Go data.

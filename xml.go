@@ -1,7 +1,7 @@
 package encoding
 
 import (
-	"encodingx/xml"
+	"polyapi/internal/encoding/xml"
 )
 
 //-------------------------

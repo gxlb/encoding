@@ -25,7 +25,7 @@ func MustToYaml(v interface{}, pretty bool) string {
 // FromYaml decode a yaml string to universal Go data.
 func FromYaml(s string) (interface{}, error) {
 	var d interface{}
-	err := yaml.Unmarshal(unsafeStringBytes(s), d)
+	err := yaml.Unmarshal(unsafeStringBytes(s), &d) // decode to *interface{}
 	return d, err
 }
 

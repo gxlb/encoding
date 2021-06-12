@@ -151,7 +151,7 @@ func Benchmark_Json(b *testing.B) {
 	MustFromJson(s)
 }
 
-func _Benchmark_Yaml(b *testing.B) {
+func Benchmark_Yaml(b *testing.B) {
 	s := MustToYaml(benchData, true)
 	MustFromYaml(s)
 }
